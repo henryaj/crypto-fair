@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	binance "github.com/binance-exchange/go-binance"
@@ -34,7 +35,6 @@ func NewBinanceClient(apiKey, apiSecret string) *BinanceClient {
 	}
 
 	ctx, _ := context.WithCancel(context.Background())
-	// use second return value for cancelling request when shutting down the app
 
 	binanceService := binance.NewAPIService(
 		"https://www.binance.com",
@@ -52,8 +52,9 @@ func (bc *BinanceClient) Connect() error {
 	return bc.client.Ping()
 }
 
-func (bc *BinanceClient) GetOrderBook(currency string, limit int) (OrderBook, error) {
+func (bc *BinanceClient) GetOrderbook(fromCurrency, toCurrency string, limit int) (OrderBook, error) {
 	orderBook := OrderBook{}
+	currency := fromCurrency + toCurrency
 
 	req := binance.OrderBookRequest{Symbol: currency, Limit: limit}
 	res, err := bc.client.OrderBook(req)
@@ -62,12 +63,46 @@ func (bc *BinanceClient) GetOrderBook(currency string, limit int) (OrderBook, er
 		return OrderBook{}, err
 	}
 
+	if len(res.Bids) == 0 || len(res.Asks) == 0 {
+		// market doesn't exist on Binance, or there was a problem getting it
+		// try a market with the symbols reversed, then reverse the orderbook
+		return bc.getReversedOrderbook(fromCurrency, toCurrency, limit)
+	}
+
 	for _, bid := range res.Bids {
 		orderBook.Bids = append(orderBook.Bids, Order(*bid))
 	}
 
 	for _, ask := range res.Asks {
 		orderBook.Asks = append(orderBook.Asks, Order(*ask))
+	}
+
+	return orderBook, nil
+}
+
+func (bc *BinanceClient) getReversedOrderbook(fromCurrency, toCurrency string, limit int) (OrderBook, error) {
+	orderBook := OrderBook{}
+
+	// NOTE reversed currency symbols
+	currency := toCurrency + fromCurrency
+
+	req := binance.OrderBookRequest{Symbol: currency, Limit: limit}
+	res, err := bc.client.OrderBook(req)
+
+	if err != nil {
+		return OrderBook{}, err
+	}
+
+	if len(res.Bids) == 0 || len(res.Asks) == 0 {
+		return OrderBook{}, fmt.Errorf("Unable to get orderbook for %s", currency)
+	}
+
+	for _, bid := range res.Bids {
+		orderBook.Asks = append(orderBook.Asks, Order(*bid))
+	}
+
+	for _, ask := range res.Asks {
+		orderBook.Bids = append(orderBook.Bids, Order(*ask))
 	}
 
 	return orderBook, nil
