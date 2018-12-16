@@ -27,7 +27,7 @@ type Order struct {
 func NewBinanceClient(apiKey, apiSecret string) *BinanceClient {
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = level.NewFilter(logger, level.AllowAll())
+	logger = level.NewFilter(logger, level.AllowWarn())
 	logger = log.With(logger, "time", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 	hmacSigner := &binance.HmacSigner{

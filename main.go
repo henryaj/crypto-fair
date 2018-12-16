@@ -15,14 +15,7 @@ func main() {
 		os.Getenv("BINANCE_SECRET_KEY"),
 	)
 
-	if err := binanceClient.Connect(); err != nil {
-		fmt.Fprintln(os.Stderr, "Unable to connect to exchange")
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
 	fmt.Println("~~~~~~ XRP:BTC fair price ~~~~~~")
-
 	for {
 		// calculate fairs
 		// XRP:BTC

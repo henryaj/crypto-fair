@@ -6,6 +6,3 @@
   branch = "master"
   name = "github.com/binance-exchange/go-binance"
 
-[[constraint]]
-  name = "github.com/go-kit/kit"
-  version = "0.6.0"

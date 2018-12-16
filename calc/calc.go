@@ -10,7 +10,7 @@ type ExchangeClient interface {
 }
 
 func GetFair(from, to string, client ExchangeClient) (float64, error) {
-	book, err := client.GetOrderbook(from, to, 100)
+	book, err := client.GetOrderbook(from, to, 50)
 	if err != nil {
 		return 0, err
 	}
